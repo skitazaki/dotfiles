@@ -5,7 +5,7 @@ export ZSH=$HOME/.oh-my-zsh
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="robbyrussell"
+ZSH_THEME="ys"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -45,7 +45,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git go django)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -55,7 +55,7 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
-# export LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
 # if [[ -n $SSH_CONNECTION ]]; then
@@ -64,11 +64,41 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 #   export EDITOR='mvim'
 # fi
 
+local ret_status="%(?:%{$fg_bold[green]%}➜ :%{$fg_bold[red]%}➜%s)"
+RPROMPT='[${ret_status}%!%{$reset_color%}]'
+setopt transient_rprompt
+
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
 # ssh
 # export SSH_KEY_PATH="~/.ssh/dsa_id"
+
+extract () {
+  if [ -f $1 ] ; then
+    case $1 in
+      *.tar.bz2)   tar xjf $1        ;;
+      *.tar.gz)    tar xzf $1     ;;
+      *.bz2)       bunzip2 $1       ;;
+      *.rar)       rar x $1     ;;
+      *.gz)        gunzip $1     ;;
+      *.tar)       tar xf $1        ;;
+      *.tbz2)      tar xjf $1      ;;
+      *.tgz)       tar xzf $1       ;;
+      *.zip)       unzip $1     ;;
+      *.Z)         uncompress $1  ;;
+      *.7z)        7z x $1    ;;
+      *)           echo "'$1' cannot be extracted via extract()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+export extract
+
+# SSH passphrase manager, thanks github help.
+# http://help.github.com/working-with-key-passphrases/
+SSH_ENV="$HOME/.ssh/environment"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -78,3 +108,9 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+docker --version > /dev/null 2>&1
+[ $? -eq 0 ] && alias dl='docker ps -l -q'
+
+direnv version > /dev/null 2>&1
+[ $? -eq 0 ] && eval "$(direnv hook zsh)"
+

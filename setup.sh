@@ -26,3 +26,10 @@ do
     [ -f ~/.$file ] || ln -s $BASEDIR/$file ~/.$file
 done
 
+# Put startup file.
+# TODO: Change directory by Linux or MacOSX
+IPYTHON_DIR=$HOME/.ipython
+IPYTHON_STARTUP_DIR=$IPYTHON_DIR/profile_default/startup
+[ -d $IPYTHON_STARTUP_DIR ] || mkdir -p $IPYTHON_STARTUP_DIR
+cp -p $BASEDIR/ipythonstartup $IPYTHON_STARTUP_DIR/00-first.py
+

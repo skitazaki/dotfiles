@@ -108,6 +108,8 @@ SSH_ENV="$HOME/.ssh/environment"
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+docker.io --version > /dev/null 2>&1
+[ $? -eq 0 ] && alias docker='sudo docker.io'
 docker --version > /dev/null 2>&1
 [ $? -eq 0 ] && alias dl='docker ps -l -q'
 

@@ -1,11 +1,9 @@
 #!/bin/sh
+#/ Usage: setup.sh
 
-BASEDIR=`cd $(dirname $0) && pwd`
-FILES=(
-    tmux.conf
-    vimrc
-    zshrc
-)
+set -eu
+
+BASEDIR=$(cd $(dirname $0) && pwd)
 
 # Install "oh-my-zsh".
 if [ ! -d ~/.oh-my-zsh ]
@@ -21,10 +19,11 @@ then
     rm -fr ~/.vim/plugin/settings
 fi
 
-for file in ${FILES[@]}
-do
-    [ -f ~/.$file ] || ln -s $BASEDIR/$file ~/.$file
-done
+[ -f ~/.zshrc ]     || ln -s $BASEDIR/zshrc     ~/.zshrc
+[ -f ~/.vimrc ]     || ln -s $BASEDIR/vimrc     ~/.vimrc
+[ -f ~/.tmux.conf ] || ln -s $BASEDIR/tmux.conf ~/.tmux.conf
+[ -f ~/.gitconfig ] || sed 's:$HOME:'$HOME':' $BASEDIR/gitconfig > ~/.gitconfig
+[ -f ~/.git-excludes ] || ln -s $BASEDIR/git-excludes ~/.git-excludes
 
 # Put startup file.
 # TODO: Change directory by Linux or MacOSX

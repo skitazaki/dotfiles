@@ -18,6 +18,7 @@
 	editor = vim
 	quotepath = false
 	whitespace = -blank-at-eof
+	precomposeunicode = true
 [user]
 	name = Shigeru Kitazaki
 	email = skitazaki@gmail.com

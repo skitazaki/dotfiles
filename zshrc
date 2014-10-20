@@ -109,9 +109,9 @@ SSH_ENV="$HOME/.ssh/environment"
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 docker.io --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias docker='sudo docker.io'
+[ $? -eq 0 ] && alias docker='sudo docker.io '
 docker --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias dl='docker ps -l -q'
+[ $? -eq 0 ] && alias dl='docker ps -l -q '
 
 direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"

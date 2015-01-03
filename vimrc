@@ -2,11 +2,10 @@
 source ~/.vim/dotvim.vim
 
 if has("user_commands")
-  set nocompatible
   filetype off
   set rtp+=~/.vim/bundle/vundle/
   call vundle#rc()
-  let g:vundles=['general', 'programming', 'python', 'javascript', 'html', 'misc']
+  let g:vundles=['general', 'programming', 'python', 'javascript', 'html', 'misc', 'go']
   "let g:vundles=['general', 'programming']
   let g:neocomplcache_enable_at_startup = 1
   " Load 'vundles'
@@ -23,13 +22,12 @@ if has("user_commands")
   vmap <Leader>c <Plug>(caw:i:toggle)
   Plugin 'scrooloose/syntastic'
   Plugin 'klen/python-mode'
+  Plugin 'fatih/vim-go'
   Plugin 'nathanaelkane/vim-indent-guides'
   let g:indent_guides_enable_on_vim_startup = 1
   let g:indent_guides_guide_size = 1
   let g:indent_guides_auto_colors = 0
-  autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd ctermbg=black guibg=black ctermbg=8
   autocmd VimEnter,Colorscheme * :hi IndentGuidesEven ctermbg=darkgrey guibg=darkgrey ctermbg=0
-  let g:indent_guides_color_change_percent = 50
 endif
 syntax enable
 set t_Co=256
@@ -43,8 +41,9 @@ colorscheme desert
 " set clipboard=unnamed,autoselect
 
 " Japanese settings, default is `UTF-8'
-set fileencodings=utf-8,iso-2022-jp,euc-jp,cp932
+set fileencodings=iso-2022-jp,cp932,sjis,euc-jp,utf-8
 set fileformats=unix,dos,mac
+set termencoding=utf-8
 
 " Key mapping
 nmap ;          :w<CR>

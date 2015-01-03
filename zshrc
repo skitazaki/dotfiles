@@ -113,6 +113,9 @@ docker.io --version > /dev/null 2>&1
 docker --version > /dev/null 2>&1
 [ $? -eq 0 ] && alias dl='docker ps -l -q '
 
+fig --version > /dev/null 2>&1
+[ $? -eq 0 ] && alias fig='sudo fig '
+
 direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"
 

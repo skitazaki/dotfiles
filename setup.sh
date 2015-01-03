@@ -8,7 +8,7 @@ BASEDIR=$(cd $(dirname $0) && pwd)
 # Install "oh-my-zsh".
 if [ ! -d ~/.oh-my-zsh ]
 then
-    curl -L http://install.ohmyz.sh | sh
+    curl -L http://install.ohmyz.sh | sh || :
     rm ~/.zshrc  # Replace this later.
 fi
 

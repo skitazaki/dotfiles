@@ -51,7 +51,18 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
-export PATH=$HOME/bin:/usr/local/bin:$PATH
+add_path () {
+  p=$1
+  echo $PATH | grep $p > /dev/null
+  if [ $? -ne 0 ]
+  then
+    export PATH=$p:$PATH
+  fi
+}
+
+add_path $HOME/bin
+add_path /usr/local/bin
+
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
@@ -118,4 +129,18 @@ fig --version > /dev/null 2>&1
 
 direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"
+
+# Configuration for Golang
+GOROOT=/usr/local/go
+GOPATH=$HOME/.gopath
+if [ -d $GOROOT ]
+then
+  export GOROOT=$GOROOT
+  add_path $GOROOT/bin
+fi
+if [ -d $GOPATH ]
+then
+  export GOPATH=$GOPATH
+  add_path $GOPATH/bin
+fi
 

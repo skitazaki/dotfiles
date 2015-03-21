@@ -45,7 +45,9 @@ ZSH_THEME="ys"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git go django)
+plugins=(git go django ssh-agent)
+
+zstyle :omz:plugins:ssh-agent identities id_rsa
 
 source $ZSH/oh-my-zsh.sh
 
@@ -109,7 +111,7 @@ export extract
 
 # SSH passphrase manager, thanks github help.
 # http://help.github.com/working-with-key-passphrases/
-SSH_ENV="$HOME/.ssh/environment"
+# SSH_ENV="$HOME/.ssh/environment"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -119,13 +121,13 @@ SSH_ENV="$HOME/.ssh/environment"
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-docker.io --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias docker='sudo docker.io '
+docker --version > /dev/null 2>&1
+[ $? -eq 0 ] && alias docker='sudo docker '
 docker --version > /dev/null 2>&1
 [ $? -eq 0 ] && alias dl='docker ps -l -q '
 
-fig --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias fig='sudo fig '
+docker-compose --version > /dev/null 2>&1
+[ $? -eq 0 ] && alias docker-compose='sudo docker-compose '
 
 direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"

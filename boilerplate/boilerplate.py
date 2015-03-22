@@ -145,6 +145,27 @@ def parse_arguments():
     return args
 
 
+def collect_files(inputs):
+    '''Check input argument files path.
+    '''
+    logger = logging.getLogger(APPNAME + '.setup')
+    if inputs is None:
+        return
+    files = []
+    for path in inputs:
+        if os.path.isfile(path):
+            logger.debug('Target file exists: %s', path)
+            files.append(path)
+        elif os.path.isdir(path):
+            logger.debug('Target directory exists: %s', path)
+            # TODO: Consider to traverse the directory.
+        else:
+            logger.fatal('File not found: %s', path)
+            sys.exit(1)
+    logger.debug('Collect {:,} files.'.format(len(files)))
+    return files
+
+
 class ConfigLoader(object):
     """Configuration file loader to support multiple file types.
 
@@ -213,11 +234,21 @@ class MainProcess(object):
             self.logger.debug('config key: %s', k)
         # TODO: Implement your logic.
 
-    def process(self, files, encoding, output):
+    def run(self, files, encoding, output):
+        if files:
+            for fname in files:
+                self.logger.info('Start processing: {}'.format(fname))
+                with open(fname, 'r', encoding=encoding) as fp:
+                    _ = self.process(fp, output)
+                self.logger.info('Finish processing: {}'.format(fname))
+        else:
+            _ = self.process(sys.stdin, output)
+
+    def process(self, fp, output):
         # TODO: Implement your logic.
         pass
 
-CONFIGURATION = """Start processing with following configurations.
+CONFIGURATION = """Start running with following configurations.
 ==============================================================================
   Base directory     : {basedir}
   Current working dir: {cwd}
@@ -235,9 +266,8 @@ def main():
     logger = logging.getLogger(APPNAME)
     # Parse command line arguments.
     args = parse_arguments()
-    files = None
+    files = collect_files(args.files)
     encoding = args.encoding
-    outputpath = sys.stdout
     processor = MainProcess(args.dryrun)
     # Check and set configuration file.
     if args.config:
@@ -247,32 +277,29 @@ def main():
         else:
             logger.fatal('Configuration file is not found: %s', configfile)
             sys.exit(1)
-    # Check input argument files path.
-    if args.files:
-        files = args.files
-        for path in files:
-            if os.path.isfile(path):
-                logger.debug('Target file exists: %s', path)
-            else:
-                logger.fatal('File not found: %s', path)
-                sys.exit(1)
     if args.output:
         outputpath = args.output
         if os.path.isfile(outputpath):
             logger.warn('Overwrite output file: %s', outputpath)
+        output = open(outputpath, 'r', encoding=args.encoding_out)
+    else:
+        output = sys.stdout
     logger.info(CONFIGURATION.format(basedir=BASEDIR, cwd=os.getcwd(),
                 configfile=args.config, dryrun=args.dryrun,
                 encoding=encoding, nfiles=len(files or []),
                 output=args.output, encoding_out=args.encoding_out))
     # Dispatch main process., and catch unknown error.
     try:
-        processor.process(files, encoding, outputpath)
+        processor.run(files, encoding, output)
     except Exception:
         e = sys.exc_info()[1]
         logger.error(e)
         traceback.print_exc(file=sys.stderr)
     finally:
-        logger.info('Finish processing.')
+        logger.info('Finish running.')
+
+    if not output.isatty():
+        output.close()
 
 
 def test():

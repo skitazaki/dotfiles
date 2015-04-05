@@ -88,7 +88,8 @@ logging.config.dictConfig({
     }
 })
 
-DEFUALT_INPUT_FILE_ENCODING = 'utf8'
+DEFAULT_INPUT_FILE_ENCODING = 'utf8'
+DEFAULT_OUTPUT_FILE_ENCODING = 'utf8'
 
 
 def parse_arguments():
@@ -98,6 +99,9 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument('-V', '--version', action='version',
+                        version='%(prog)s ' + __version__)
+
     parser.add_argument('-c', '--config', dest='config',
                         help='configuration file', metavar='FILE')
     parser.add_argument('-o', '--output', dest='output',
@@ -106,10 +110,12 @@ def parse_arguments():
                         help='dry run', default=False, action='store_true')
     parser.add_argument('-e', '--encoding', dest='encoding',
                         help='input file encoding',
-                        default=DEFUALT_INPUT_FILE_ENCODING)
+                        default=DEFAULT_INPUT_FILE_ENCODING)
     parser.add_argument('-E', '--output-encoding', dest='encoding_out',
                         help='output file encoding',
-                        default=DEFUALT_INPUT_FILE_ENCODING)
+                        default=DEFAULT_OUTPUT_FILE_ENCODING)
+    parser.add_argument('-r', '--recursive', dest='recursive', default=False,
+                        help='search recursive', action='store_true')
     parser.add_argument('files', nargs='*',
                         help='input files', metavar='FILE')
 
@@ -145,20 +151,25 @@ def parse_arguments():
     return args
 
 
-def collect_files(inputs):
+def collect_files(inputs, recursive=False):
     '''Check input argument files path.
     '''
     logger = logging.getLogger(APPNAME + '.setup')
-    if inputs is None:
+    if inputs is None or len(inputs) == 0:
         return
     files = []
     for path in inputs:
         if os.path.isfile(path):
             logger.debug('Target file exists: %s', path)
             files.append(path)
-        elif os.path.isdir(path):
+        elif os.path.isdir(path) and recursive:
             logger.debug('Target directory exists: %s', path)
-            # TODO: Consider to traverse the directory.
+            for root, ds, fs in os.walk(path):
+                # Prune hidden directory.
+                ds[:] = [d for d in ds if not d.startswith('.')]
+                for f in sorted(filter(lambda f: not f.endswith('~'), fs)):
+                    p = os.path.join(root, f)
+                    files.append(p)
         else:
             logger.fatal('File not found: %s', path)
             sys.exit(1)
@@ -256,6 +267,7 @@ CONFIGURATION = """Start running with following configurations.
   Dry-run            : {dryrun}
   Input encoding     : {encoding}
   Input #files       : {nfiles}
+  Search recursive   : {recursive}
   Output path        : {output}
   Output encoding    : {encoding_out}
 ==============================================================================
@@ -266,7 +278,7 @@ def main():
     logger = logging.getLogger(APPNAME)
     # Parse command line arguments.
     args = parse_arguments()
-    files = collect_files(args.files)
+    files = collect_files(args.files, args.recursive)
     encoding = args.encoding
     processor = MainProcess(args.dryrun)
     # Check and set configuration file.
@@ -281,12 +293,13 @@ def main():
         outputpath = args.output
         if os.path.isfile(outputpath):
             logger.warn('Overwrite output file: %s', outputpath)
-        output = open(outputpath, 'r', encoding=args.encoding_out)
+        output = open(outputpath, 'w', encoding=args.encoding_out)
     else:
         output = sys.stdout
     logger.info(CONFIGURATION.format(basedir=BASEDIR, cwd=os.getcwd(),
                 configfile=args.config, dryrun=args.dryrun,
                 encoding=encoding, nfiles=len(files or []),
+                recursive=args.recursive,
                 output=args.output, encoding_out=args.encoding_out))
     # Dispatch main process., and catch unknown error.
     try:

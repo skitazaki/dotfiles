@@ -22,6 +22,7 @@ if has("user_commands")
   vmap <Leader>c <Plug>(caw:i:toggle)
   Plugin 'scrooloose/syntastic'
   Plugin 'klen/python-mode'
+  let g:pymode_rope = 0
   Plugin 'fatih/vim-go'
   Plugin 'nathanaelkane/vim-indent-guides'
   let g:indent_guides_enable_on_vim_startup = 1

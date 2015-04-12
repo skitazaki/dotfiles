@@ -111,7 +111,9 @@ def parse_arguments():
     parser.add_argument('-c', '--config', dest='config', required=False,
                         help='configuration file', metavar='FILE')
     parser.add_argument('-m', '--monitor', dest='monitor', required=False,
-                        help='process monitor file', metavar='FILE')
+                        help='progress monitor file', metavar='FILE')
+    parser.add_argument('-M', '--monitor-output', dest='monitor_out',
+                        help='progress monitor dump file', metavar='FILE')
     parser.add_argument('-o', '--output', dest='output',
                         help='output path', metavar='FILE')
     parser.add_argument('-n', '--dryrun', dest='dryrun',
@@ -259,12 +261,13 @@ class ProgressMonitor(object):
         {'id': 'result', 'type': 'string'},  # Anything encoded by JSON
     )
 
-    def __init__(self, fname):
+    def __init__(self, fname, dump=None):
         self.logger = logging.getLogger(APPNAME + '.monitor')
         if fname and os.path.isfile(fname):
             self.logger.info('Reuse monitor file: %s', fname)
         self.db = sqlite3.connect(fname or ProgressMonitor.DEFAULT_MONITOR_FILE)
         self.create_table()
+        self.dump = dump
         self.current = None
 
     def create_table(self):
@@ -301,12 +304,15 @@ class ProgressMonitor(object):
         cur.close()
         self.logger.info('Created monitor table.')
 
-    def terminate(self, dump=None):
+    def terminate(self):
         self.db.commit()
-        if dump is None:
+        if self.dump is None:
             return
-        # Dump monitor records as tab-delimited values.
-        writer = csv.writer(dump, delimiter='\t', lineterminator='\n')
+        if os.path.isfile(self.dump):
+            self.logger.warn('Overwrite dump file: %s', self.dump)
+        self.logger.info('Dump monitor records as tab-delimited values.')
+        fp = open(self.dump, 'w')
+        writer = csv.writer(fp, delimiter='\t', lineterminator='\n')
         header = ('seq', 'path', 'start_at', 'finish_at', 'elapsed', 'digest')
         writer.writerow(header)
         q = 'SELECT * FROM {} ORDER BY seq'.format(ProgressMonitor.TABLE_NAME)
@@ -326,6 +332,7 @@ class ProgressMonitor(object):
             t.append(r[4])
             writer.writerow(list(map(lambda s: str(s) if s else '', t)))
         cur.close()
+        fp.close()
 
     def fetch_one(self, columns, conditions, table=None):
         # It's okay `columns` is string or list.
@@ -408,21 +415,37 @@ class MainProcess(object):
     # TODO: Implement your logic.
     """
 
-    def __init__(self, dryrun, monitor_file=None):
+    def __init__(self, dryrun):
         self.dryrun = dryrun
         self.logger = logging.getLogger(APPNAME + '.main')
-        self.monitor = ProgressMonitor(monitor_file)
 
     def configure(self, configfile):
+        if not os.path.isfile(configfile):
+            self.logger.fatal('Configuration file is not found: %s', configfile)
+            return
         loader = ConfigLoader(configfile)
         config = loader.load()
         for k in sorted(config):
             self.logger.debug('config key: %s', k)
         # TODO: Implement your logic.
 
-    def setup_writer(self, output):
-        # TODO: Implement your logic.
-        pass
+    def initialize(self, config, output, output_encoding,
+                   monitor_file=None, monitor_dump=None):
+        if config:
+            self.configure(config)
+        if output:
+            if os.path.isfile(output):
+                self.logger.warn('Overwrite output file: %s', output)
+            self.output = open(output, 'w', encoding=output_encoding)
+        else:
+            self.output = sys.stdout
+        self.monitor = ProgressMonitor(monitor_file, monitor_dump)
+
+    def terminate(self):
+        self.monitor.terminate()
+        if not self.output.isatty():
+            self.output.close()
+        self.logger.info('Terminated the process.')
 
     def run(self, files, encoding):
         if files:
@@ -433,8 +456,6 @@ class MainProcess(object):
                 with open(fname, 'r', encoding=encoding) as fp:
                     r = self.process(fp)
                 self.monitor.finish({'lines': r})
-            # TODO: Set output file name for monitor dump.
-            self.monitor.terminate(sys.stdout)
         else:
             self.process(sys.stdin)
 
@@ -452,6 +473,7 @@ CONFIGURATION = """Start running with following configurations.
   Current working dir: {cwd}
   Configuration file : {configfile}
   Monitor file       : {monitorfile}
+  Monitor dump file  : {monitordumpfile}
   Dry-run            : {dryrun}
   Input encoding     : {encoding}
   Input #files       : {nfiles}
@@ -463,33 +485,21 @@ CONFIGURATION = """Start running with following configurations.
 
 
 def main():
-    logger = logging.getLogger(APPNAME)
     # Parse command line arguments.
     args = parse_arguments()
     files = collect_files(args.files, args.recursive)
     encoding = args.encoding
-    processor = MainProcess(args.dryrun, args.monitor)
-    # Check and set configuration file.
-    if args.config:
-        configfile = args.config
-        if os.path.isfile(configfile):
-            processor.configure(configfile)
-        else:
-            logger.fatal('Configuration file is not found: %s', configfile)
-            sys.exit(1)
-    if args.output:
-        outputpath = args.output
-        if os.path.isfile(outputpath):
-            logger.warn('Overwrite output file: %s', outputpath)
-        output = open(outputpath, 'w', encoding=args.encoding_out)
-    else:
-        output = sys.stdout
-    processor.setup_writer(output)
+    logger = logging.getLogger(APPNAME + '.setup')
     logger.info(CONFIGURATION.format(basedir=BASEDIR, cwd=os.getcwd(),
                 configfile=args.config, dryrun=args.dryrun,
                 encoding=encoding, nfiles=len(files or []),
-                recursive=args.recursive, monitorfile=args.monitor,
+                recursive=args.recursive,
+                monitorfile=args.monitor, monitordumpfile=args.monitor_out,
                 output=args.output, encoding_out=args.encoding_out))
+    # Initialize main class.
+    processor = MainProcess(args.dryrun)
+    processor.initialize(args.config, args.output, args.encoding_out,
+                         args.monitor, args.monitor_out)
     # Dispatch main process, and catch unknown error.
     try:
         processor.run(files, encoding)
@@ -498,10 +508,7 @@ def main():
         logger.error(e)
         traceback.print_exc(file=sys.stderr)
     finally:
-        logger.info('Finish running.')
-
-    if not output.isatty():
-        output.close()
+        processor.terminate()
 
 
 def test():

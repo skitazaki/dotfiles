@@ -40,6 +40,7 @@ import sqlite3
 import sys
 import time
 import traceback
+from collections import Counter
 from functools import partial
 
 __version__ = '0.1.0'
@@ -47,6 +48,9 @@ __author__ = 'Shigeru Kitazaki'
 
 APPNAME = os.path.splitext(os.path.basename(__file__))[0]
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DEFAULT_SQLITE_FILE = ':memory:'
 
 logging.config.dictConfig({
     'version': 1,
@@ -110,8 +114,8 @@ def parse_arguments():
 
     parser.add_argument('-c', '--config', dest='config', required=False,
                         help='configuration file', metavar='FILE')
-    parser.add_argument('-m', '--monitor', dest='monitor', required=False,
-                        help='progress monitor file', metavar='FILE')
+    parser.add_argument('-s', '--sqlite', dest='sqlite', required=False,
+                        help='local SQLite3 file', metavar='FILE')
     parser.add_argument('-M', '--monitor-output', dest='monitor_out',
                         help='progress monitor dump file', metavar='FILE')
     parser.add_argument('-o', '--output', dest='output',
@@ -162,12 +166,14 @@ def parse_arguments():
 
 
 def collect_files(inputs, recursive=False):
-    '''Check input argument files path.
+    '''Collect file paths from input arguments.
+    The directory whose name starts with "." and the file whose name ends with
+    "~" are skipped.
     '''
     logger = logging.getLogger(APPNAME + '.setup')
-    if inputs is None or len(inputs) == 0:
-        return
     files = []
+    if inputs is None or len(inputs) == 0:
+        return files
     for path in inputs:
         if os.path.isfile(path):
             logger.debug('Target file exists: %s', path)
@@ -176,7 +182,7 @@ def collect_files(inputs, recursive=False):
             logger.debug('Target directory exists: %s', path)
             for root, ds, fs in os.walk(path):
                 # Prune hidden directory.
-                ds[:] = [d for d in ds if not d.startswith('.')]
+                ds[:] = [d for d in sorted(ds) if not d.startswith('.')]
                 for f in sorted(filter(lambda f: not f.endswith('~'), fs)):
                     p = os.path.join(root, f)
                     files.append(p)
@@ -250,7 +256,6 @@ class ConfigLoader(object):
 
 class ProgressMonitor(object):
 
-    DEFAULT_MONITOR_FILE = ':memory:'
     TABLE_NAME = '_monitor'
     SCHEMA = (
         {'id': 'seq', 'type': 'integer', 'primary': True},
@@ -261,11 +266,9 @@ class ProgressMonitor(object):
         {'id': 'result', 'type': 'string'},  # Anything encoded by JSON
     )
 
-    def __init__(self, fname, dump=None):
+    def __init__(self, db, dump=None):
         self.logger = logging.getLogger(APPNAME + '.monitor')
-        if fname and os.path.isfile(fname):
-            self.logger.info('Reuse monitor file: %s', fname)
-        self.db = sqlite3.connect(fname or ProgressMonitor.DEFAULT_MONITOR_FILE)
+        self.db = db
         self.create_table()
         self.dump = dump
         self.current = None
@@ -304,8 +307,7 @@ class ProgressMonitor(object):
         cur.close()
         self.logger.info('Created monitor table.')
 
-    def terminate(self):
-        self.db.commit()
+    def terminate(self, adapter, header=None):
         if self.dump is None:
             return
         if os.path.isfile(self.dump):
@@ -313,24 +315,16 @@ class ProgressMonitor(object):
         self.logger.info('Dump monitor records as tab-delimited values.')
         fp = open(self.dump, 'w')
         writer = csv.writer(fp, delimiter='\t', lineterminator='\n')
-        header = ('seq', 'path', 'start_at', 'finish_at', 'elapsed', 'digest')
-        writer.writerow(header)
-        q = 'SELECT * FROM {} ORDER BY seq'.format(ProgressMonitor.TABLE_NAME)
+        columns = list(map(lambda r: r['id'], ProgressMonitor.SCHEMA))
+        q = 'SELECT {} FROM {} ORDER BY seq'.format(
+            ','.join(columns), ProgressMonitor.TABLE_NAME)
         cur = self.db.cursor()
         cur.execute(q)
+        if header is not None:
+            writer.writerow(header)
         for r in cur:
-            t = [r[0], r[1]]
-            start = datetime.datetime.fromtimestamp(r[2])
-            t.append(start.strftime('%Y-%m-%d %H:%M:%S'))
-            if r[3]:
-                finish = datetime.datetime.fromtimestamp(r[3])
-                t.append(finish.strftime('%Y-%m-%d %H:%M:%S'))
-                t.append(r[3] - r[2])
-            else:
-                t.append(None)
-                t.append(None)
-            t.append(r[4])
-            writer.writerow(list(map(lambda s: str(s) if s else '', t)))
+            t = dict(zip(columns, r))
+            writer.writerow(adapter(t))
         cur.close()
         fp.close()
 
@@ -409,10 +403,50 @@ class ProgressMonitor(object):
             r[1], r[0], now - r[2]))
 
 
+def monitor_header():
+    '''Default header line of monitor dump file.
+    '''
+    return ('seq', 'path', 'start_at', 'finish_at', 'elapsed', 'digest')
+
+
+def monitor_adapter(row):
+    '''Adapter function to convert internal row to text-based row.
+    '''
+    t = [str(row['seq']), row['path'].replace('\\', '/')]
+    start = datetime.datetime.fromtimestamp(row['start_at'])
+    t.append(start.strftime(DATETIME_FORMAT))
+    if row['finish_at'] is not None:
+        finish = datetime.datetime.fromtimestamp(row['finish_at'])
+        t.append(finish.strftime(DATETIME_FORMAT))
+        t.append(str(row['finish_at'] - row['start_at']))
+    else:
+        t += ['', '']
+    t.append(row['digest'])
+    return t
+
+
+class App(object):
+
+    """Main application class.
+    # TODO: Implement your logic.
+    """
+
+    def __init__(self, db):
+        self.logger = logging.getLogger(APPNAME + '.app')
+        self.db = db
+
+    def process(self, fp):
+        # TODO: Implement your logic.
+        lines = 0
+        reader = map(str.rstrip, fp)
+        for l in reader:
+            lines += 1
+        return {'lines': lines}
+
+
 class MainProcess(object):
 
-    """Main process class.
-    # TODO: Implement your logic.
+    """Main process class for wrapping setup/termination.
     """
 
     def __init__(self, dryrun):
@@ -425,12 +459,15 @@ class MainProcess(object):
             return
         loader = ConfigLoader(configfile)
         config = loader.load()
+        if config is None:
+            self.logger.warn('Nothing to be loaded.')
+            return
         for k in sorted(config):
             self.logger.debug('config key: %s', k)
         # TODO: Implement your logic.
 
     def initialize(self, config, output, output_encoding,
-                   monitor_file=None, monitor_dump=None):
+                   sqlite=None, monitor_dump=None):
         if config:
             self.configure(config)
         if output:
@@ -439,40 +476,48 @@ class MainProcess(object):
             self.output = open(output, 'w', encoding=output_encoding)
         else:
             self.output = sys.stdout
-        self.monitor = ProgressMonitor(monitor_file, monitor_dump)
+        if sqlite and os.path.isfile(sqlite):
+            self.logger.info('Reuse local SQLite3 file: %s', sqlite)
+        self.localdb = sqlite3.connect(sqlite or DEFAULT_SQLITE_FILE)
+        self.monitor = ProgressMonitor(self.localdb, monitor_dump)
 
     def terminate(self):
-        self.monitor.terminate()
+        self.monitor.terminate(monitor_adapter, monitor_header())
         if not self.output.isatty():
             self.output.close()
+        self.localdb.commit()
         self.logger.info('Terminated the process.')
 
     def run(self, files, encoding):
+        app = App(self.localdb)
         if files:
+            counter = Counter()
             for fname in files:
+                counter['total'] += 1
                 canskip = self.monitor.start(fname)
                 if canskip:
+                    counter['skip'] += 1
+                    self.logger.info('Skip to process: %s', fname)
                     continue
                 with open(fname, 'r', encoding=encoding) as fp:
-                    r = self.process(fp)
-                self.monitor.finish({'lines': r})
+                    r = app.process(fp)
+                self.monitor.finish(r)
+                if r is None:
+                    counter['ignore'] += 1
+                else:
+                    counter['process'] += 1
+            for k in sorted(counter):
+                self.logger.info(' - {:20s} : {:,}'.format(k, counter[k]))
         else:
-            self.process(sys.stdin)
+            app.process(sys.stdin)
 
-    def process(self, fp):
-        # TODO: Implement your logic.
-        lines = 0
-        reader = map(str.rstrip, fp)
-        for l in reader:
-            lines += 1
-        return lines
 
 CONFIGURATION = """Start running with following configurations.
 ==============================================================================
   Base directory     : {basedir}
   Current working dir: {cwd}
   Configuration file : {configfile}
-  Monitor file       : {monitorfile}
+  Local SQLite3 file : {sqlite}
   Monitor dump file  : {monitordumpfile}
   Dry-run            : {dryrun}
   Input encoding     : {encoding}
@@ -491,15 +536,15 @@ def main():
     encoding = args.encoding
     logger = logging.getLogger(APPNAME + '.setup')
     logger.info(CONFIGURATION.format(basedir=BASEDIR, cwd=os.getcwd(),
-                configfile=args.config, dryrun=args.dryrun,
+                configfile=os.path.abspath(args.config), dryrun=args.dryrun,
                 encoding=encoding, nfiles=len(files or []),
                 recursive=args.recursive,
-                monitorfile=args.monitor, monitordumpfile=args.monitor_out,
+                sqlite=args.sqlite, monitordumpfile=args.monitor_out,
                 output=args.output, encoding_out=args.encoding_out))
     # Initialize main class.
     processor = MainProcess(args.dryrun)
     processor.initialize(args.config, args.output, args.encoding_out,
-                         args.monitor, args.monitor_out)
+                         args.sqlite, args.monitor_out)
     # Dispatch main process, and catch unknown error.
     try:
         processor.run(files, encoding)

@@ -133,6 +133,18 @@ def parse_arguments():
     parser.add_argument('files', nargs='*',
                         help='input files', metavar='FILE')
 
+    header = parser.add_mutually_exclusive_group()
+
+    header.add_argument('--with-header', dest='header',
+                        action='store_const', const=True,
+                        help='input file has header line (default)')
+
+    header.add_argument('--without-header', dest='header',
+                        action='store_const', const=False,
+                        help='input file does not have header line')
+
+    parser.set_defaults(header=True)
+
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument('-v', '--verbose', dest='verbose',
@@ -324,6 +336,8 @@ class ProgressMonitor(object):
             writer.writerow(header)
         for r in cur:
             t = dict(zip(columns, r))
+            if t['result']:
+                t['result'] = json.loads(t['result'])
             writer.writerow(adapter(t))
         cur.close()
         fp.close()
@@ -406,13 +420,15 @@ class ProgressMonitor(object):
 def monitor_header():
     '''Default header line of monitor dump file.
     '''
-    return ('seq', 'path', 'start_at', 'finish_at', 'elapsed', 'digest')
+    return ('seq', 'path', 'lines',
+            'start_at', 'finish_at', 'elapsed', 'digest')
 
 
 def monitor_adapter(row):
     '''Adapter function to convert internal row to text-based row.
     '''
     t = [str(row['seq']), row['path'].replace('\\', '/')]
+    t.append(str(row['result']['lines']))
     start = datetime.datetime.fromtimestamp(row['start_at'])
     t.append(start.strftime(DATETIME_FORMAT))
     if row['finish_at'] is not None:
@@ -435,9 +451,12 @@ class App(object):
         self.logger = logging.getLogger(APPNAME + '.app')
         self.db = db
 
-    def process(self, fp):
-        # TODO: Implement your logic.
+    def process(self, fp, header):
         lines = 0
+        if header:  # skip header line
+            next(fp)
+            lines += 1
+        # TODO: Implement your logic.
         reader = map(str.rstrip, fp)
         for l in reader:
             lines += 1
@@ -488,7 +507,7 @@ class MainProcess(object):
         self.localdb.commit()
         self.logger.info('Terminated the process.')
 
-    def run(self, files, encoding):
+    def run(self, files, encoding, header):
         app = App(self.localdb)
         if files:
             counter = Counter()
@@ -500,16 +519,17 @@ class MainProcess(object):
                     self.logger.info('Skip to process: %s', fname)
                     continue
                 with open(fname, 'r', encoding=encoding) as fp:
-                    r = app.process(fp)
+                    r = app.process(fp, header)
                 self.monitor.finish(r)
                 if r is None:
                     counter['ignore'] += 1
                 else:
                     counter['process'] += 1
+            self.logger.info('show summary:')
             for k in sorted(counter):
                 self.logger.info(' - {:20s} : {:,}'.format(k, counter[k]))
         else:
-            app.process(sys.stdin)
+            app.process(sys.stdin, header)
 
 
 CONFIGURATION = """Start running with following configurations.
@@ -521,6 +541,7 @@ CONFIGURATION = """Start running with following configurations.
   Monitor dump file  : {monitordumpfile}
   Dry-run            : {dryrun}
   Input encoding     : {encoding}
+  Input has header   : {header}
   Input #files       : {nfiles}
   Search recursive   : {recursive}
   Output path        : {output}
@@ -534,20 +555,21 @@ def main():
     args = parse_arguments()
     files = collect_files(args.files, args.recursive)
     encoding = args.encoding
+    configfile = os.path.abspath(args.config) if args.config else None
     logger = logging.getLogger(APPNAME + '.setup')
     logger.info(CONFIGURATION.format(basedir=BASEDIR, cwd=os.getcwd(),
-                configfile=os.path.abspath(args.config), dryrun=args.dryrun,
+                configfile=configfile, dryrun=args.dryrun,
                 encoding=encoding, nfiles=len(files or []),
-                recursive=args.recursive,
+                recursive=args.recursive, header=args.header,
                 sqlite=args.sqlite, monitordumpfile=args.monitor_out,
                 output=args.output, encoding_out=args.encoding_out))
     # Initialize main class.
     processor = MainProcess(args.dryrun)
-    processor.initialize(args.config, args.output, args.encoding_out,
+    processor.initialize(configfile, args.output, args.encoding_out,
                          args.sqlite, args.monitor_out)
     # Dispatch main process, and catch unknown error.
     try:
-        processor.run(files, encoding)
+        processor.run(files, encoding, args.header)
     except Exception:
         e = sys.exc_info()[1]
         logger.error(e)

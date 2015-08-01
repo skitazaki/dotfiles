@@ -269,14 +269,21 @@ class ConfigLoader(object):
 class ProgressMonitor(object):
 
     TABLE_NAME = '_monitor'
-    SCHEMA = (
-        {'id': 'seq', 'type': 'integer', 'primary': True},
-        {'id': 'path', 'type': 'string', 'required': True},
-        {'id': 'start_at', 'type': 'float', 'required': True},
-        {'id': 'finish_at', 'type': 'float'},
-        {'id': 'digest', 'type': 'string', 'required': True, 'unique': True},
-        {'id': 'result', 'type': 'string'},  # Anything encoded by JSON
-    )
+    SCHEMA = {
+        'fields': (
+            {'name': 'seq', 'type': 'integer',
+             'constraints': {'required': True, 'unique': True}},
+            {'name': 'path', 'type': 'string',
+             'constraints': {'required': True}},
+            {'name': 'start_at', 'type': 'float',
+             'constraints': {'required': True}},
+            {'name': 'finish_at', 'type': 'float'},
+            {'name': 'digest', 'type': 'string',
+             'constraints': {'required': True, 'unique': True}},
+            {'name': 'result', 'type': 'string'},  # Anything encoded by JSON
+        ),
+        'primaryKeys': ['seq']
+    }
 
     def __init__(self, db, dump=None):
         self.logger = logging.getLogger(APPNAME + '.monitor')
@@ -297,20 +304,24 @@ class ProgressMonitor(object):
             return
         d = []
         # Pattern mapping against JSON Table Schema
-        for s in ProgressMonitor.SCHEMA:
+        for s in ProgressMonitor.SCHEMA['fields']:
             t = 'TEXT'
             if s['type'] == 'integer':
                 t = 'INTEGER'
             elif s['type'] == 'float':
                 t = 'REAL'
-            f = '{} {}'.format(s['id'], t)
-            if s.get('primary'):
-                f += ' PRIMARY KEY'
-            if s.get('required'):
-                f += ' NOT NULL'
-            if s.get('unique'):
-                f += ' UNIQUE'
+            f = '{} {}'.format(s['name'], t)
+            c = s.get('constraints')
+            if c:
+                if c.get('required'):
+                    f += ' NOT NULL'
+                if c.get('unique'):
+                    f += ' UNIQUE'
             d.append(f)
+        f = 'PRIMARY KEY ('
+        f += ','.join(k for k in ProgressMonitor.SCHEMA['primaryKeys'])
+        f += ')'
+        d.append(f)
         ddl = """CREATE TABLE {} ({})""".format(
             ProgressMonitor.TABLE_NAME, ','.join(d))
         self.logger.debug('Create monitor table: %s', ddl)
@@ -319,7 +330,7 @@ class ProgressMonitor(object):
         cur.close()
         self.logger.info('Created monitor table.')
 
-    def terminate(self, adapter, header=None):
+    def terminate(self, fields):
         if self.dump is None:
             return
         if os.path.isfile(self.dump):
@@ -327,18 +338,25 @@ class ProgressMonitor(object):
         self.logger.info('Dump monitor records as tab-delimited values.')
         fp = open(self.dump, 'w')
         writer = csv.writer(fp, delimiter='\t', lineterminator='\n')
-        columns = list(map(lambda r: r['id'], ProgressMonitor.SCHEMA))
+        columns = [f['name'] for f in ProgressMonitor.SCHEMA['fields']]
         q = 'SELECT {} FROM {} ORDER BY seq'.format(
             ','.join(columns), ProgressMonitor.TABLE_NAME)
         cur = self.db.cursor()
         cur.execute(q)
-        if header is not None:
-            writer.writerow(header)
+        dumper = Tabular(fields)
+        writer.writerow(dumper.header())
         for r in cur:
             t = dict(zip(columns, r))
+            t['path'] = t['path'].replace('\\', '/')
+            if t['finish_at'] is not None:
+                t['elapsed'] = t['finish_at'] - t['start_at']
+                t['finish_at'] = datetime.datetime.fromtimestamp(t['finish_at'])
+            t['start_at'] = datetime.datetime.fromtimestamp(t['start_at'])
             if t['result']:
-                t['result'] = json.loads(t['result'])
-            writer.writerow(adapter(t))
+                result = json.loads(t['result'])
+                for k in result:
+                    t[k] = result[k]
+            writer.writerow(dumper(t))
         cur.close()
         fp.close()
 
@@ -417,28 +435,66 @@ class ProgressMonitor(object):
             r[1], r[0], now - r[2]))
 
 
-def monitor_header():
-    '''Default header line of monitor dump file.
-    '''
-    return ('seq', 'path', 'lines',
-            'start_at', 'finish_at', 'elapsed', 'digest')
+class Tabular(object):
 
+    '''JSON Table Schema based record class.
 
-def monitor_adapter(row):
-    '''Adapter function to convert internal row to text-based row.
+    FIELDS = (
+        {'name': 'id', 'type': 'string'},
+        {'name': 'updated', 'type': 'datetime', 'format': '%Y-%m-%dT%H:%M:%SZ'},
+        {'name': 'name', 'type': 'string'},
+        {'name': 'latitude', 'type': 'float'},
+        {'name': 'longitude', 'type': 'float'},
+        {'name': 'zipcode', 'type': 'string'},
+        {'name': 'kind', 'type': 'string', 'default': 'UNKNOWN'},
+        {'name': 'update_type', 'type': 'integer'}
+    )
     '''
-    t = [str(row['seq']), row['path'].replace('\\', '/')]
-    t.append(str(row['result']['lines']))
-    start = datetime.datetime.fromtimestamp(row['start_at'])
-    t.append(start.strftime(DATETIME_FORMAT))
-    if row['finish_at'] is not None:
-        finish = datetime.datetime.fromtimestamp(row['finish_at'])
-        t.append(finish.strftime(DATETIME_FORMAT))
-        t.append(str(row['finish_at'] - row['start_at']))
-    else:
-        t += ['', '']
-    t.append(row['digest'])
-    return t
+
+    def __init__(self, fields):
+        self.fields = fields
+
+    def header(self):
+        return [f['name'] for f in self.fields]
+
+    def __call__(self, dt):
+        out = []
+        for f in self.fields:
+            k, t = f['name'], f['type']
+            v = dt.get(k, f.get('default', ''))
+            if t == 'string':
+                val = v
+            elif not v:
+                val = ''
+            elif t == 'datetime':
+                val = v.strftime(f['format'])
+            elif t == 'integer':
+                val = str(v)
+            elif t == 'float':
+                if 'precision' in f:
+                    v = round(v, f['precision'])
+                val = str(v)
+            elif t == 'boolean':
+                m = f.get('mapping', {})
+                if v in m:
+                    val = m[v]
+                else:
+                    val = str(v)
+            else:
+                raise ValueError('Unknown type "{}" for "{}"'.format(t, k))
+            out.append(val)
+        return out
+
+# Default monitor dump schema. If you add more fields to dump, add it here.
+MONITOR_DUMP_FIELDS = (
+    {'name': 'seq', 'type': 'integer'},
+    {'name': 'path', 'type': 'string'},
+    {'name': 'lines', 'type': 'integer'},
+    {'name': 'start_at', 'type': 'datetime', 'format': DATETIME_FORMAT},
+    {'name': 'finish_at', 'type': 'datetime', 'format': DATETIME_FORMAT},
+    {'name': 'elapsed', 'type': 'float', 'precision': 4},
+    {'name': 'digest', 'type': 'string'},
+)
 
 
 class App(object):
@@ -501,7 +557,7 @@ class MainProcess(object):
         self.monitor = ProgressMonitor(self.localdb, monitor_dump)
 
     def terminate(self):
-        self.monitor.terminate(monitor_adapter, monitor_header())
+        self.monitor.terminate(MONITOR_DUMP_FIELDS)
         if not self.output.isatty():
             self.output.close()
         self.localdb.commit()

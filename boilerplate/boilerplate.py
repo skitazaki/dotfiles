@@ -50,7 +50,10 @@ APPNAME = os.path.splitext(os.path.basename(__file__))[0]
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+CONFIG_FILE_ENCODING = 'utf8'
 DEFAULT_SQLITE_FILE = ':memory:'
+DEFAULT_INPUT_FILE_ENCODING = 'utf8'
+DEFAULT_OUTPUT_FILE_ENCODING = 'utf8'
 
 logging.config.dictConfig({
     'version': 1,
@@ -91,15 +94,12 @@ logging.config.dictConfig({
             'propagate': True
         },
         APPNAME: {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'WARN',
             'propagate': False
         }
     }
 })
-
-DEFAULT_INPUT_FILE_ENCODING = 'utf8'
-DEFAULT_OUTPUT_FILE_ENCODING = 'utf8'
 
 
 def parse_arguments():
@@ -228,17 +228,18 @@ class ConfigLoader(object):
     """
 
     def __init__(self, path):
+        assert path
         self.path = path
         self.logger = logging.getLogger(APPNAME + '.config')
 
     def _load(self, extension):
         self.logger.debug('Config file extension is "%s".', extension)
         if extension == '.json':
-            with open(self.path) as fp:
+            with open(self.path, encoding=CONFIG_FILE_ENCODING) as fp:
                 return json.load(fp)
         elif extension in (".ini", ".cfg"):
             parser = configparser.SafeConfigParser()
-            with open(self.path) as fp:
+            with open(self.path, encoding=CONFIG_FILE_ENCODING) as fp:
                 parser.readfp(fp)
             config = {}
             for s in parser.sections():
@@ -258,10 +259,11 @@ class ConfigLoader(object):
         self.logger.debug('Loading config "%s" ...', self.path)
         ext = os.path.splitext(self.path)[-1].lower()
         if len(ext) == 0:
-            self.logger.warn("Missing file extension: %s", self.path)
+            self.logger.warning('missing file extension: %s', self.path)
             return
         elif not ext.startswith('.'):
-            self.logger.warn("Extension doesn't start with dot: %s", self.path)
+            self.logger.warning("file extension doesn't start with dot: %s",
+                                self.path)
             return
         return self._load(ext)
 
@@ -282,7 +284,7 @@ class ProgressMonitor(object):
              'constraints': {'required': True, 'unique': True}},
             {'name': 'result', 'type': 'string'},  # Anything encoded by JSON
         ),
-        'primaryKeys': ['seq']
+        'primaryKey': ['seq']
     }
 
     def __init__(self, db, dump=None):
@@ -319,7 +321,7 @@ class ProgressMonitor(object):
                     f += ' UNIQUE'
             d.append(f)
         f = 'PRIMARY KEY ('
-        f += ','.join(k for k in ProgressMonitor.SCHEMA['primaryKeys'])
+        f += ','.join(k for k in ProgressMonitor.SCHEMA['primaryKey'])
         f += ')'
         d.append(f)
         ddl = """CREATE TABLE {} ({})""".format(
@@ -462,15 +464,15 @@ class Tabular(object):
         for f in self.fields:
             k, t = f['name'], f['type']
             v = dt.get(k, f.get('default', ''))
-            if t == 'string':
-                val = v
-            elif not v:
+            if v is None:
                 val = ''
+            elif t == 'string':
+                val = v
             elif t == 'datetime':
                 val = v.strftime(f['format'])
             elif t == 'integer':
                 val = str(v)
-            elif t == 'float':
+            elif t in ('float', 'numeric'):
                 if 'precision' in f:
                     v = round(v, f['precision'])
                 val = str(v)
@@ -634,11 +636,90 @@ def main():
         processor.terminate()
 
 
-def test():
-    # TODO: Implement test code.
-    pass
-
 if __name__ == '__main__':
     main()
+
+
+# Test suites to bundle as one file script.
+# To run the tests, invoke this script using "-m unittest" option.
+# i.e. `python3 -m unittest -v boilerplate.py`
+import tempfile
+import unittest
+
+
+class TabularTest(unittest.TestCase):
+
+    def setUp(self):
+        fields = (
+            {'name': 'id', 'type': 'string'},
+            {'name': 'updated', 'type': 'datetime',
+             'format': DATETIME_FORMAT},
+            {'name': 'name', 'type': 'string'},
+            {'name': 'latitude', 'type': 'float'},
+            {'name': 'longitude', 'type': 'float'},
+            {'name': 'zipcode', 'type': 'string'},
+            {'name': 'kind', 'type': 'string', 'default': 'UNKNOWN'},
+            {'name': 'update_type', 'type': 'integer'}
+        )
+        self.tabular = Tabular(fields)
+
+    def test_header(self):
+        expected = ['id', 'updated', 'name', 'latitude', 'longitude',
+                    'zipcode', 'kind', 'update_type']
+        self.assertEqual(expected, self.tabular.header())
+
+    def test_call(self):
+        data = {
+            'id': '1234567890',
+            'updated': datetime.datetime(2000, 1, 1, 12, 34, 56),
+            'name': 'somewhere',
+            'latitude': 12.34,
+            'longitude': -123.45678,
+            'zipcode': 'ABCDEF',
+            'update_type': 0
+        }
+        expected = ['1234567890', '2000-01-01 12:34:56', 'somewhere',
+                    '12.34', '-123.45678', 'ABCDEF', 'UNKNOWN', '0']
+        self.assertEqual(expected, self.tabular(data))
+
+
+class ConfigLoaderTest(unittest.TestCase):
+
+    def setUp(self):
+        config = '''
+            {
+                "database": {
+                    "host": "127.0.0.1",
+                    "port": 5432,
+                    "name": "t",
+                    "user": "app",
+                    "password": "secret"
+                }
+            }
+        '''
+        fd, path = tempfile.mkstemp('.json')
+        with open(path, 'w', encoding=CONFIG_FILE_ENCODING) as fp:
+            fp.write(config)
+        self.loader = ConfigLoader(path)
+
+    def test_load(self):
+        expected = {
+            'host': '127.0.0.1',
+            'port': 5432,
+            'name': 't',
+            'user': 'app',
+            'password': 'secret'
+        }
+        config = self.loader.load()
+        self.assertEqual(expected, config['database'])
+
+    def test_initialize_failure(self):
+        with self.assertRaises(AssertionError):
+            ConfigLoader(None)
+            ConfigLoader('')
+
+    def test_invalid_path(self):
+        loader = ConfigLoader('notfound')
+        self.assertIsNone(loader.load())
 
 # vim: set et ts=4 sw=4 cindent fileencoding=utf-8 :

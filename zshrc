@@ -139,9 +139,7 @@ if [ -d $GOROOT ]
 then
   export GOROOT=$GOROOT
   add_path $GOROOT/bin
-fi
-if [ -d $GOPATH ]
-then
+  [ -d $GOPATH ] || mkdir -p $GOPATH
   export GOPATH=$GOPATH
   add_path $GOPATH/bin
 fi

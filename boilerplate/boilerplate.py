@@ -31,6 +31,7 @@ import argparse
 import configparser
 import csv
 import datetime
+import gzip
 import hashlib
 import json
 import logging
@@ -277,6 +278,8 @@ class ProgressMonitor(object):
              'constraints': {'required': True, 'unique': True}},
             {'name': 'path', 'type': 'string',
              'constraints': {'required': True}},
+            {'name': 'size', 'type': 'integer',
+             'constraints': {'required': True}},
             {'name': 'start_at', 'type': 'float',
              'constraints': {'required': True}},
             {'name': 'finish_at', 'type': 'float'},
@@ -350,6 +353,8 @@ class ProgressMonitor(object):
         for r in cur:
             t = dict(zip(columns, r))
             t['path'] = t['path'].replace('\\', '/')
+            t['basename'] = os.path.basename(t['path'])
+            t['extension'] = os.path.splitext(t['path'])[-1].lower()
             if t['finish_at'] is not None:
                 t['elapsed'] = t['finish_at'] - t['start_at']
                 t['finish_at'] = datetime.datetime.fromtimestamp(t['finish_at'])
@@ -386,16 +391,18 @@ class ProgressMonitor(object):
 
     def start(self, path):
         md5 = md5sum(path)
-        r = self.fetch_one(['seq', 'path', 'start_at', 'finish_at'], (
+        r = self.fetch_one(['seq', 'path', 'size', 'start_at', 'finish_at'], (
             ('digest', '=', md5),
         ))
         if r:
             msg = 'Already processed "{}": [{}] {} -> {}'
             self.logger.info(msg.format(r[1], r[0], r[2], r[3]))
             return r
-        self.logger.info('Start monitoring: %s (%s)', path, md5)
-        columns = ('path', 'start_at', 'digest')
-        values = (path, time.time(), md5)
+        size = os.path.getsize(path)
+        self.logger.info('Start monitoring: {} ({}) {:,}bytes'.format(
+                         path, md5, size))
+        columns = ('path', 'size', 'start_at', 'digest')
+        values = (path, size, time.time(), md5)
         q = """INSERT INTO {} ({}) VALUES ({})""".format(
             ProgressMonitor.TABLE_NAME,
             ','.join(columns),
@@ -491,6 +498,10 @@ class Tabular(object):
 MONITOR_DUMP_FIELDS = (
     {'name': 'seq', 'type': 'integer'},
     {'name': 'path', 'type': 'string'},
+    {'name': 'basename', 'type': 'string'},
+    {'name': 'extension', 'type': 'string'},
+    {'name': 'size', 'type': 'integer'},
+    {'name': 'columns', 'type': 'integer'},
     {'name': 'lines', 'type': 'integer'},
     {'name': 'start_at', 'type': 'datetime', 'format': DATETIME_FORMAT},
     {'name': 'finish_at', 'type': 'datetime', 'format': DATETIME_FORMAT},
@@ -567,27 +578,34 @@ class MainProcess(object):
 
     def run(self, files, encoding, header):
         app = App(self.localdb)
-        if files:
-            counter = Counter()
-            for fname in files:
-                counter['total'] += 1
-                canskip = self.monitor.start(fname)
-                if canskip:
-                    counter['skip'] += 1
-                    self.logger.info('Skip to process: %s', fname)
-                    continue
-                with open(fname, 'r', encoding=encoding) as fp:
-                    r = app.process(fp, header)
-                self.monitor.finish(r)
-                if r is None:
-                    counter['ignore'] += 1
-                else:
-                    counter['process'] += 1
-            self.logger.info('show summary:')
-            for k in sorted(counter):
-                self.logger.info(' - {:20s} : {:,}'.format(k, counter[k]))
-        else:
+        if not files:
             app.process(sys.stdin, header)
+            return
+        counter = Counter()
+        for path in files:
+            counter['total'] += 1
+            canskip = self.monitor.start(path)
+            if canskip:
+                counter['skip'] += 1
+                self.logger.info('Skip to process: %s', path)
+                continue
+            _, suffix = os.path.splitext(path)
+            if suffix == '.gz':
+                opener = gzip.open
+                open_mode = 'rt'
+            else:
+                opener = open
+                open_mode = 'r'
+            with opener(path, open_mode, encoding=encoding) as fp:
+                r = app.process(fp, header)
+            self.monitor.finish(r)
+            if r is None:
+                counter['ignore'] += 1
+            else:
+                counter['process'] += 1
+        self.logger.info('show summary:')
+        for k in sorted(counter):
+            self.logger.info(' - {:20s} : {:,}'.format(k, counter[k]))
 
 
 CONFIGURATION = """Start running with following configurations.
@@ -701,6 +719,9 @@ class ConfigLoaderTest(unittest.TestCase):
         with open(path, 'w', encoding=CONFIG_FILE_ENCODING) as fp:
             fp.write(config)
         self.loader = ConfigLoader(path)
+
+    def tearDown(self):
+        os.unlink(self.loader.path)
 
     def test_load(self):
         expected = {

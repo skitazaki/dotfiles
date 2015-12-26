@@ -47,7 +47,9 @@ ZSH_THEME="ys"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git go django docker ssh-agent)
 
-zstyle :omz:plugins:ssh-agent identities id_rsa
+if [ -f $HOME/.ssh/id_rsa ]; then
+  zstyle :omz:plugins:ssh-agent identities id_rsa
+fi
 
 source $ZSH/oh-my-zsh.sh
 
@@ -143,4 +145,3 @@ then
   export GOPATH=$GOPATH
   add_path $GOPATH/bin
 fi
-

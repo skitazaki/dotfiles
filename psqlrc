@@ -1,0 +1,12 @@
+--
+-- [PostgreSQL: Documentation: 9.4: psql](http://www.postgresql.org/docs/9.4/static/app-psql.html)
+-- [Improving the Command-Line Postgres Experience](https://robots.thoughtbot.com/improving-the-command-line-postgres-experience)
+--
+\set QUIET 1
+\x auto
+\set COMP_KEYWORD_CASE upper
+\set HISTCONTROL ignoredups
+\set PROMPT1 '%[%033[1m%]%M %n@%/%R%[%033[0m%]%# '
+\set PROMPT2 '[more] %R > '
+\pset null '[NULL]'
+\unset QUIET

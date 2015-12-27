@@ -23,6 +23,7 @@ fi
 [ -f ~/.zshrc ]     || ln -s $BASEDIR/zshrc     ~/.zshrc
 [ -f ~/.vimrc ]     || ln -s $BASEDIR/vimrc     ~/.vimrc
 [ -f ~/.tmux.conf ] || ln -s $BASEDIR/tmux.conf ~/.tmux.conf
+[ -f ~/.psqlrc ]    || ln -s $BASEDIR/psqlrc    ~/.psqlrc
 [ -f ~/.gitconfig ] || sed 's:$HOME:'$HOME':' $BASEDIR/gitconfig > ~/.gitconfig
 [ -f ~/.git-excludes ] || ln -s $BASEDIR/git-excludes ~/.git-excludes
 

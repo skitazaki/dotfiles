@@ -56,4 +56,3 @@ elif [ `uname -s` = "Darwin" ]; then
 fi
 tool_install "https://cdn.rawgit.com/harelba/q/1.5.0/bin/q" q
 tool_install "https://raw.githubusercontent.com/dilshod/xlsx2csv/master/xlsx2csv.py" xlsx2csv.py
-tool_install "https://github.com/AlDanial/cloc/releases/download/1.64/cloc-1.64.pl" cloc.pl

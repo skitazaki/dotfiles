@@ -45,7 +45,7 @@ ZSH_THEME="ys"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(go django docker ssh-agent)
+plugins=(go docker ssh-agent)
 
 if [ -f $HOME/.ssh/id_rsa ]; then
   zstyle :omz:plugins:ssh-agent identities id_rsa
@@ -123,13 +123,6 @@ export extract
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-docker --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias docker='sudo docker '
-docker --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias dl='docker ps -l -q '
-
-docker-compose --version > /dev/null 2>&1
-[ $? -eq 0 ] && alias docker-compose='sudo docker-compose '
 
 direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"

@@ -129,10 +129,10 @@ direnv version > /dev/null 2>&1
 
 # Configuration for Golang
 GOROOT=/usr/local/go
-GOPATH=$HOME/.gopath
+GOPATH=$HOME/go
 if [ -d $GOROOT ]
 then
-  export GOROOT=$GOROOT
+  # export GOROOT=$GOROOT
   add_path $GOROOT/bin
   [ -d $GOPATH ] || mkdir -p $GOPATH
   export GOPATH=$GOPATH

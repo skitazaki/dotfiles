@@ -1,5 +1,7 @@
 # dotfiles
 
+Setup `zsh` using [Oh My Zsh](https://ohmyz.sh/) and put config files for `git`.
+
 ## Prerequisites
 
 - Git
@@ -9,8 +11,6 @@
 
 Additional installations under `$HOME/bin`.
 
-- direnv
-- cloc.pl
-- jq
-- q
-- xlsx2csv.py
+- direnv - https://direnv.net/
+- jq - https://stedolan.github.io/jq/
+- q - http://harelba.github.io/q/

@@ -47,12 +47,13 @@ tool_install () {
     chmod +x $dst
 }
 
+# Install direnv
+# https://github.com/direnv/direnv/blob/master/docs/installation.md
+curl -sfL https://direnv.net/install.sh | bash
+
 if [ `uname -s` = "Linux" ]; then
-    tool_install "https://github.com/direnv/direnv/releases/download/v2.6.0/direnv.linux-amd64" direnv
-    tool_install "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64" jq
+    tool_install "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" jq
 elif [ `uname -s` = "Darwin" ]; then
-    tool_install "https://github.com/direnv/direnv/releases/download/v2.6.0/direnv.darwin-amd64" direnv
-    tool_install "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-osx-amd64" jq
+    tool_install "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64" jq
+    tool_install "https://github.com/harelba/packages-for-q/raw/master/single-binary/Darwin/2.0.9/q" q
 fi
-tool_install "https://cdn.rawgit.com/harelba/q/1.5.0/bin/q" q
-tool_install "https://raw.githubusercontent.com/dilshod/xlsx2csv/master/xlsx2csv.py" xlsx2csv.py

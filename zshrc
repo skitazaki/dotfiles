@@ -138,11 +138,3 @@ then
   export GOPATH=$GOPATH
   add_path $GOPATH/bin
 fi
-
-# added by travis gem
-[ -f ~/.travis/travis.sh ] && source ~/.travis/travis.sh
-
-if [ -d $HOME/.rbenv ]; then
-  add_path $HOME/.rbenv/bin
-  eval "$(rbenv init -)"
-fi

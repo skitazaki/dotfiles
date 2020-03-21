@@ -43,18 +43,20 @@ import time
 import traceback
 from collections import Counter
 from functools import partial
+from pathlib import Path
 
 __version__ = '0.1.0'
 __author__ = 'Shigeru Kitazaki'
 
-APPNAME = os.path.splitext(os.path.basename(__file__))[0]
-BASEDIR = os.path.dirname(os.path.abspath(__file__))
+APPNAME = Path(__file__).stem
+BASEDIR = Path(__file__).parent.resolve()
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 CONFIG_FILE_ENCODING = 'utf8'
 DEFAULT_SQLITE_FILE = ':memory:'
 DEFAULT_INPUT_FILE_ENCODING = 'utf8'
 DEFAULT_OUTPUT_FILE_ENCODING = 'utf8'
+DEFAULT_LOG_DIRECTORY = Path.cwd()
 
 logging.config.dictConfig({
     'version': 1,
@@ -73,15 +75,15 @@ logging.config.dictConfig({
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
             'stream': 'ext://sys.stderr',
             'formatter': 'standard'
         },
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'detailed',
-            'filename': APPNAME + '.log',
+            'filename': DEFAULT_LOG_DIRECTORY / (APPNAME + '.log'),
             'mode': 'a',
             'maxBytes': 10485760,
             'backupCount': 5,
@@ -146,15 +148,15 @@ def parse_arguments():
 
     parser.set_defaults(header=True)
 
-    group = parser.add_mutually_exclusive_group()
+    loglevel = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-v', '--verbose', dest='verbose',
-                       action='count', default=0,
-                       help='increase logging verbosity')
+    loglevel.add_argument('-v', '--verbose', dest='verbose',
+                          action='count', default=0,
+                          help='increase logging verbosity')
 
-    group.add_argument('-q', '--quiet', dest='quiet',
-                       default=False, action='store_true',
-                       help='set logging to quiet mode')
+    loglevel.add_argument('-q', '--quiet', dest='quiet',
+                          default=False, action='store_true',
+                          help='set logging to quiet mode')
 
     try:
         args = parser.parse_args()
@@ -169,11 +171,11 @@ def parse_arguments():
     elif args.verbose >= 3:
         logger.setLevel(logging.DEBUG)
     elif args.verbose >= 2:
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.ERROR)
     elif args.verbose >= 1:
         logger.setLevel(logging.WARN)
     else:
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
 
     return args
 
@@ -742,5 +744,3 @@ class ConfigLoaderTest(unittest.TestCase):
     def test_invalid_path(self):
         loader = ConfigLoader('notfound')
         self.assertIsNone(loader.load())
-
-# vim: set et ts=4 sw=4 cindent fileencoding=utf-8 :

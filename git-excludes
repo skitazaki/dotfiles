@@ -2,6 +2,5 @@
 *.swp
 .Python
 .DS_Store
-.ipynb_checkpoints
-.ropeproject
+.ipynb_checkpoints/
 .vscode/

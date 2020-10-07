@@ -5,7 +5,7 @@ if has("user_commands")
   filetype off
   set rtp+=~/.vim/bundle/vundle/
   call vundle#rc()
-  let g:vundles=['general', 'programming', 'python', 'javascript', 'html', 'misc', 'go']
+  let g:vundles=['general', 'programming', 'python', 'javascript', 'html', 'misc', 'golang']
   "let g:vundles=['general', 'programming']
   let g:neocomplcache_enable_at_startup = 1
   " Load 'vundles'

@@ -138,3 +138,5 @@ then
   export GOPATH=$GOPATH
   add_path $GOPATH/bin
 fi
+
+add_path "$HOME/.poetry/bin"

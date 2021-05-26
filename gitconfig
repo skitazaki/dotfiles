@@ -1,3 +1,6 @@
+[user]
+	name = Shigeru Kitazaki
+	email = skitazaki@gmail.com
 [color]
 	ui = auto
 [alias]
@@ -19,7 +22,6 @@
 	quotepath = false
 	whitespace = -blank-at-eof
 	precomposeunicode = true
-[user]
-	name = Shigeru Kitazaki
-	email = skitazaki@gmail.com
-
+[pull]
+	ff = only
+	rebase = false

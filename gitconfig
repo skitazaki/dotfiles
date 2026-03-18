@@ -18,7 +18,7 @@
 [core]
 	autocrlf = false
 	excludesfile = $HOME/.git-excludes
-	editor = vim
+	editor = code --wait
 	quotepath = false
 	whitespace = -blank-at-eof
 	precomposeunicode = true

@@ -45,7 +45,7 @@ ZSH_THEME="ys"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(golang docker ssh-agent)
+plugins=(golang docker node ssh-agent)
 
 if [ -f $HOME/.ssh/id_rsa ]; then
   zstyle :omz:plugins:ssh-agent identities id_rsa
@@ -128,15 +128,25 @@ direnv version > /dev/null 2>&1
 [ $? -eq 0 ] && eval "$(direnv hook zsh)"
 
 # Configuration for Golang
-GOROOT=/usr/local/go
+# Go installed via Homebrew on macOS (Apple Silicon)
 GOPATH=$HOME/go
-if [ -d $GOROOT ]
+if command -v go > /dev/null 2>&1
 then
-  # export GOROOT=$GOROOT
-  add_path $GOROOT/bin
   [ -d $GOPATH ] || mkdir -p $GOPATH
   export GOPATH=$GOPATH
   add_path $GOPATH/bin
 fi
 
-add_path "$HOME/.poetry/bin"
+# Configuration for Node via nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# Configuration for Python via uv
+add_path "$HOME/.local/bin"
+
+# GitHub Copilot CLI alias
+if command -v gh > /dev/null 2>&1
+then
+  eval "$(gh copilot alias -- zsh)" 2>/dev/null || true
+fi

@@ -41,7 +41,7 @@ fi
 # Install Node via nvm
 if [ ! -d "$HOME/.nvm" ]
 then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
 fi
 
 # Install Python toolchain via uv

@@ -38,10 +38,10 @@ then
     brew install go
 fi
 
-# Install Node via nvm
-if [ ! -d "$HOME/.nvm" ]
+# Install Node version manager via fnm
+if ! command -v fnm > /dev/null 2>&1
 then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+    brew install fnm
 fi
 
 # Install Python toolchain via uv

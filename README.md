@@ -20,7 +20,7 @@ This will install and configure:
 
 - [Go](https://golang.org/) via Homebrew
 - [Python](https://www.python.org/) via [uv](https://docs.astral.sh/uv/) (fast Python package and project manager)
-- [Node.js](https://nodejs.org/) via [nvm](https://github.com/nvm-sh/nvm)
+- [Node.js](https://nodejs.org/) via [fnm](https://github.com/Schniz/fnm)
 
 ### Developer Tools
 

@@ -78,3 +78,15 @@ if [ "$(uname -s)" = "Darwin" ] && ! command -v docker > /dev/null 2>&1
 then
     brew install --cask docker
 fi
+
+# Install iTerm2
+if [ "$(uname -s)" = "Darwin" ] && ! [ -d "/Applications/iTerm.app" ]
+then
+    brew install --cask iterm2
+fi
+
+# Install zsh-syntax-highlighting
+if ! brew list zsh-syntax-highlighting > /dev/null 2>&1
+then
+    brew install zsh-syntax-highlighting
+fi

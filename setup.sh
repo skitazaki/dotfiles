@@ -32,29 +32,8 @@ then
     xcode-select --install
 fi
 
-# Install Go
-if ! command -v go > /dev/null 2>&1
-then
-    brew install go
-fi
-
-# Install Node version manager via fnm
-if ! command -v fnm > /dev/null 2>&1
-then
-    brew install fnm
-fi
-
-# Install Python toolchain via uv
-if ! command -v uv > /dev/null 2>&1
-then
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-fi
-
-# Install GitHub CLI (for GitHub Copilot CLI)
-if ! command -v gh > /dev/null 2>&1
-then
-    brew install gh
-fi
+# Install formulae and casks listed in Brewfile.
+brew bundle --file="$BASEDIR/Brewfile"
 
 # Install GitHub Copilot CLI extension
 if command -v gh > /dev/null 2>&1
@@ -65,28 +44,4 @@ then
     else
         gh extension install github/gh-copilot 2>/dev/null || true
     fi
-fi
-
-# Install VS Code
-if [ "$(uname -s)" = "Darwin" ] && ! command -v code > /dev/null 2>&1
-then
-    brew install --cask visual-studio-code
-fi
-
-# Install Docker Desktop
-if [ "$(uname -s)" = "Darwin" ] && ! command -v docker > /dev/null 2>&1
-then
-    brew install --cask docker
-fi
-
-# Install iTerm2
-if [ "$(uname -s)" = "Darwin" ] && ! [ -d "/Applications/iTerm.app" ]
-then
-    brew install --cask iterm2
-fi
-
-# Install zsh-syntax-highlighting
-if ! brew list zsh-syntax-highlighting > /dev/null 2>&1
-then
-    brew install zsh-syntax-highlighting
 fi

@@ -28,7 +28,7 @@ This will install and configure:
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) via Homebrew Cask in Bundle
 - [iTerm2](https://iterm2.com/) via Homebrew Cask in Bundle
 - `zsh-syntax-highlighting` via Homebrew Bundle
-- [GitHub Copilot CLI](https://githubnext.com/projects/copilot-cli) via `gh` extension
+- [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
 - Git via Xcode Command Line Tools
 
 Homebrew-managed software is defined in [Brewfile](Brewfile) and installed with:

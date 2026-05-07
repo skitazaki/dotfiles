@@ -7,6 +7,7 @@ brew "uv"
 brew "gh"
 brew "zsh-syntax-highlighting"
 
+cask "copilot-cli"
 cask "visual-studio-code"
 cask "docker-desktop"
 cask "iterm2"

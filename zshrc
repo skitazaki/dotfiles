@@ -146,12 +146,6 @@ fi
 # Configuration for Python via uv
 add_path "$HOME/.local/bin"
 
-# GitHub Copilot CLI alias
-if command -v gh > /dev/null 2>&1
-then
-  eval "$(gh copilot alias -- zsh)" 2>/dev/null || true
-fi
-
 # Enable zsh-syntax-highlighting (must be sourced at the end)
 ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"

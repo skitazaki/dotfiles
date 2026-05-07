@@ -34,14 +34,3 @@ fi
 
 # Install formulae and casks listed in Brewfile.
 brew bundle --file="$BASEDIR/Brewfile"
-
-# Install GitHub Copilot CLI extension
-if command -v gh > /dev/null 2>&1
-then
-    if gh extension list 2>/dev/null | grep -q 'gh-copilot'
-    then
-        gh extension upgrade gh-copilot 2>/dev/null || true
-    else
-        gh extension install github/gh-copilot 2>/dev/null || true
-    fi
-fi

@@ -2,6 +2,7 @@
 
 brew "go"
 brew "golangci-lint"
+brew "ripgrep"
 brew "fnm"
 brew "uv"
 brew "gh"

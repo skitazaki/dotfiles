@@ -27,6 +27,7 @@ This will install and configure:
 - [VS Code](https://code.visualstudio.com/) via Homebrew Cask in Bundle
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) via Homebrew Cask in Bundle
 - [iTerm2](https://iterm2.com/) via Homebrew Cask in Bundle
+- [ripgrep](https://github.com/BurntSushi/ripgrep) via Homebrew Bundle for fast recursive search with `rg`
 - `zsh-syntax-highlighting` via Homebrew Bundle
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
 - Git via Xcode Command Line Tools
@@ -50,4 +51,10 @@ brew bundle dump --force --file=Brewfile
 
 # Uninstall packages not listed in Brewfile
 brew bundle cleanup --file=Brewfile --force
+```
+
+Useful local search command once the bundle is installed:
+
+```sh
+rg "TODO" .
 ```

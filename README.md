@@ -28,6 +28,7 @@ This will install and configure:
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) via Homebrew Cask in Bundle
 - [iTerm2](https://iterm2.com/) via Homebrew Cask in Bundle
 - [ripgrep](https://github.com/BurntSushi/ripgrep) via Homebrew Bundle for fast recursive search with `rg`
+- [Task](https://taskfile.dev/) via Homebrew Bundle for running tasks from [Taskfile.yml](Taskfile.yml)
 - `zsh-syntax-highlighting` via Homebrew Bundle
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
 - [Codex](https://developers.openai.com/codex/) via Homebrew Cask in Bundle
@@ -38,6 +39,8 @@ Homebrew-managed software is defined in [Brewfile](Brewfile) and installed with:
 ```sh
 brew bundle --file=Brewfile
 ```
+
+Common project commands are defined in [Taskfile.yml](Taskfile.yml) and run with `task`.
 
 ## Maintenance
 

@@ -11,6 +11,7 @@ tasks:
       - brew list --versions fnm
       - brew list --versions uv
       - brew list --versions gh
+      - brew list --versions go-task
       - brew list --versions zsh-syntax-highlighting
       - brew list --cask --versions copilot-cli
       - brew list --cask --versions visual-studio-code

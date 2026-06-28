@@ -1,0 +1,19 @@
+version: "3"
+
+tasks:
+  versions:
+    desc: Show installed versions of tools managed by Brewfile
+    silent: true
+    cmds:
+      - brew list --versions go
+      - brew list --versions golangci-lint
+      - brew list --versions ripgrep
+      - brew list --versions fnm
+      - brew list --versions uv
+      - brew list --versions gh
+      - brew list --versions zsh-syntax-highlighting
+      - brew list --cask --versions copilot-cli
+      - brew list --cask --versions visual-studio-code
+      - brew list --cask --versions docker-desktop
+      - brew list --cask --versions iterm2
+      - brew list --cask --versions codex

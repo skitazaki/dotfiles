@@ -30,6 +30,7 @@ This will install and configure:
 - [ripgrep](https://github.com/BurntSushi/ripgrep) via Homebrew Bundle for fast recursive search with `rg`
 - `zsh-syntax-highlighting` via Homebrew Bundle
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
+- [Codex](https://developers.openai.com/codex/) via Homebrew Cask in Bundle
 - Git via Xcode Command Line Tools
 
 Homebrew-managed software is defined in [Brewfile](Brewfile) and installed with:

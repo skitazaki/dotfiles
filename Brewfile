@@ -6,6 +6,7 @@ brew "ripgrep"
 brew "fnm"
 brew "uv"
 brew "gh"
+brew "go-task"
 brew "zsh-syntax-highlighting"
 
 cask "copilot-cli"

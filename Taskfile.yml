@@ -18,3 +18,9 @@ tasks:
       - brew list --cask --versions docker-desktop
       - brew list --cask --versions iterm2
       - brew list --cask --versions codex
+
+  format:
+    desc: Format code
+    silent: true
+    cmds:
+      - npx oxfmt

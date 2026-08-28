@@ -23,4 +23,4 @@ tasks:
     desc: Format code
     silent: true
     cmds:
-      - npx oxfmt
+      - npx --yes oxfmt

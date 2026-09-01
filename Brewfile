@@ -8,6 +8,7 @@ brew "uv"
 brew "gh"
 brew "go-task"
 brew "zsh-syntax-highlighting"
+brew "pi-coding-agent"
 
 cask "copilot-cli"
 cask "visual-studio-code"

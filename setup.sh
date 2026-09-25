@@ -28,9 +28,11 @@ link_or_replace() {
         fi
         rm -f "$dst"
     elif [ -e "$dst" ]; then
-        backup="$dst.bak.$(date +%Y%m%d%H%M%S)"
+        backup_index=0
+        backup="$dst.bak.$(date +%Y%m%d%H%M%S).$backup_index"
         while [ -e "$backup" ] || [ -L "$backup" ]; do
-            backup="$dst.bak.$(date +%Y%m%d%H%M%S)"
+            backup_index=$((backup_index + 1))
+            backup="$dst.bak.$(date +%Y%m%d%H%M%S).$backup_index"
         done
         mv "$dst" "$backup"
     fi

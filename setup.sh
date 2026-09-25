@@ -22,11 +22,17 @@ link_or_replace() {
     dst="$2"
 
     if [ -L "$dst" ]; then
-        return 0
-    fi
-
-    if [ -e "$dst" ]; then
-        mv "$dst" "$dst.bak"
+        current_target=$(readlink "$dst" 2>/dev/null || true)
+        if [ "$current_target" = "$src" ]; then
+            return 0
+        fi
+        rm -f "$dst"
+    elif [ -e "$dst" ]; then
+        backup="$dst.bak.$(date +%Y%m%d%H%M%S)"
+        while [ -e "$backup" ] || [ -L "$backup" ]; do
+            backup="$dst.bak.$(date +%Y%m%d%H%M%S)"
+        done
+        mv "$dst" "$backup"
     fi
 
     ln -s "$src" "$dst"

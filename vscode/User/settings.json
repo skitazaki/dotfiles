@@ -1,0 +1,11 @@
+{
+  "git.confirmSync": false,
+  "githubPullRequests.pullBranch": "never",
+  "workbench.startupEditor": "none",
+  "chat.viewSessions.orientation": "stacked",
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "/Users/skitazaki/workspace/dotfiles.worktrees/vscode-github-copilot-configs/vscode/User/github-copilot-worktree-policy.md"
+    }
+  ]
+}

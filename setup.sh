@@ -16,6 +16,28 @@ fi
 [ -f ~/.gitconfig ]    || sed 's:$HOME:'$HOME':' $BASEDIR/gitconfig > ~/.gitconfig
 [ -f ~/.git-excludes ] || ln -s $BASEDIR/git-excludes ~/.git-excludes
 
+# Link machine-wide VS Code settings from the dotfiles repo.
+link_or_replace() {
+    src="$1"
+    dst="$2"
+
+    if [ -L "$dst" ]; then
+        return 0
+    fi
+
+    if [ -e "$dst" ]; then
+        mv "$dst" "$dst.bak"
+    fi
+
+    ln -s "$src" "$dst"
+}
+
+for vscode_user in "$HOME/Library/Application Support/Code/User" "$HOME/Library/Application Support/Code - Insiders/User"; do
+    [ -d "$vscode_user" ] || mkdir -p "$vscode_user"
+    link_or_replace "$BASEDIR/vscode/User/settings.json" "$vscode_user/settings.json"
+    link_or_replace "$BASEDIR/vscode/User/github-copilot-worktree-policy.md" "$vscode_user/github-copilot-worktree-policy.md"
+done
+
 #
 # Install developer tools for the AI era.
 #

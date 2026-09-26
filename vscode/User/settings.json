@@ -1,0 +1,11 @@
+{
+  "git.confirmSync": false,
+  "githubPullRequests.pullBranch": "never",
+  "workbench.startupEditor": "none",
+  "chat.viewSessions.orientation": "stacked",
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "${env:HOME}/Library/Application Support/Code/User/github-copilot-worktree-policy.md"
+    }
+  ]
+}

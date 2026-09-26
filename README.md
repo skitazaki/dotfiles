@@ -24,7 +24,7 @@ This will install and configure:
 
 ### Developer Tools
 
-- [VS Code](https://code.visualstudio.com/) via Homebrew Cask in Bundle
+- [VS Code](https://code.visualstudio.com/) via Homebrew Cask in Bundle, with machine-wide settings linked from the repo under `vscode/User/`
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) via Homebrew Cask in Bundle
 - [iTerm2](https://iterm2.com/) via Homebrew Cask in Bundle
 - [ripgrep](https://github.com/BurntSushi/ripgrep) via Homebrew Bundle for fast recursive search with `rg`

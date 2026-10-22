@@ -1,11 +1,16 @@
 # Git worktree policy
 
-When working on tasks in parallel:
+When starting work from `main`:
 
 - Use a separate Git worktree for each independent task.
 - Never let two agents modify the same worktree.
 - Use one branch per worktree.
 - Prefer branch names such as `codex/<task-name>`.
+
+## Pull request content
+
+- Do not include local machine absolute paths, usernames, home directories, or workspace paths in PR titles, descriptions, or comments.
+- Use repository-relative paths when referring to files.
 
 ## Worktree location
 

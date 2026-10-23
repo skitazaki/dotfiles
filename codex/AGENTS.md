@@ -1,4 +1,6 @@
-# Git worktree policy
+# Git and contribution policy
+
+## Worktree policy
 
 When starting work from `main`:
 
@@ -18,7 +20,7 @@ When starting work from `main`:
 - Do not include local machine absolute paths, usernames, home directories, or workspace paths in PR titles, descriptions, or comments.
 - Use repository-relative paths when referring to files.
 
-## Worktree location
+### Worktree location
 
 - Store persistent worktrees under `~/worktrees/<repo>/`.
 - Name Codex worktrees `codex-<task-name>`, for example:
@@ -28,7 +30,7 @@ When starting work from `main`:
 - If a worktree already exists for the task, reuse it only when it belongs
   exclusively to the current task and agent. Otherwise create a new worktree.
 
-## Worktree setup
+### Worktree setup
 
 - Run repository setup instructions immediately after creating a worktree.
 - Treat each worktree as an isolated workspace.
@@ -36,7 +38,7 @@ When starting work from `main`:
   build output, or caches unless the repository explicitly says they are safe
   to share.
 
-## Before finishing
+### Before finishing
 
 - Run the repository's formatting and validation commands.
 - Inspect `git status` and `git diff`.

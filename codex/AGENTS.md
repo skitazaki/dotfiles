@@ -9,17 +9,6 @@ When starting work from `main`:
 - Use one branch per worktree.
 - Prefer branch names such as `codex/<task-name>`.
 
-## Commit messages
-
-- Write commit messages using [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/), in the format `<type>[optional scope][!]: <description>`, followed by an optional body and footer(s).
-- Use `feat` for new features and `fix` for bug fixes. Other descriptive types such as `docs`, `chore`, `refactor`, and `test` are also allowed.
-- Mark breaking changes with `!` before the colon or a `BREAKING CHANGE:` footer.
-
-## Pull request content
-
-- Do not include local machine absolute paths, usernames, home directories, or workspace paths in PR titles, descriptions, or comments.
-- Use repository-relative paths when referring to files.
-
 ### Worktree location
 
 - Store persistent worktrees under `~/worktrees/<repo>/`.
@@ -49,3 +38,14 @@ When starting work from `main`:
   - the validation results.
 
 - Do not remove the worktree unless explicitly requested.
+
+## Commit messages
+
+- Write commit messages using [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/), in the format `<type>[optional scope][!]: <description>`, followed by an optional body and footer(s).
+- Use `feat` for new features and `fix` for bug fixes. Other descriptive types such as `docs`, `chore`, `refactor`, and `test` are also allowed.
+- Mark breaking changes with `!` before the colon or a `BREAKING CHANGE:` footer.
+
+## Pull request content
+
+- Do not include local machine absolute paths, usernames, home directories, or workspace paths in PR titles, descriptions, or comments.
+- Use repository-relative paths when referring to files.

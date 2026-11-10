@@ -32,7 +32,9 @@ This will install and configure:
 - `zsh-syntax-highlighting` via Homebrew Bundle
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
 - [Codex](https://developers.openai.com/codex/) via Homebrew Cask in Bundle
+- [Claude Code](https://www.anthropic.com/claude-code) via Homebrew Cask in Bundle
 - [Pi Coding Agent](https://pi.dev/) via Homebrew Bundle
+- [Ollama](https://ollama.ai/) via Homebrew Bundle for running large language models locally
 - Git via Xcode Command Line Tools
 
 Homebrew-managed software is defined in [Brewfile](Brewfile) and installed with:

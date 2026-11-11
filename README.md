@@ -51,7 +51,7 @@ After setup, you can launch Claude Code and Pi coding agents with Ollama integra
 
 ### Claude Code
 
-Launch Claude Code with Ollama with interactive model selection:
+Launch Claude Code through Ollama with interactive model selection:
 
 ```sh
 ollama launch claude

@@ -32,7 +32,9 @@ This will install and configure:
 - `zsh-syntax-highlighting` via Homebrew Bundle
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) via Homebrew Cask in Bundle
 - [Codex](https://developers.openai.com/codex/) via Homebrew Cask in Bundle
+- [Claude Code](https://www.anthropic.com/claude-code) via Homebrew Cask in Bundle
 - [Pi Coding Agent](https://pi.dev/) via Homebrew Bundle
+- [Ollama](https://ollama.ai/) via Homebrew Bundle for running large language models locally
 - Git via Xcode Command Line Tools
 
 Homebrew-managed software is defined in [Brewfile](Brewfile) and installed with:
@@ -43,22 +45,69 @@ brew bundle --file=Brewfile
 
 Common project commands are defined in [Taskfile.yml](Taskfile.yml) and run with `task`.
 
-## Maintenance
+## Launch Agents through Ollama
 
-Common commands for keeping your bundle up to date:
+After setup, you can launch Claude Code and Pi coding agents with Ollama integration:
+
+### Claude Code
+
+Launch Claude Code through Ollama with interactive model selection:
 
 ```sh
-# Add or remove packages in Brewfile, then apply changes
+ollama launch claude
+```
+
+Or launch with a specific model in non-interactive mode (useful for scripts/CI):
+
+```sh
+ollama launch claude --model qwen3.5:cloud --yes -- -p "your prompt here"
+```
+
+See [Claude Code integration docs](https://docs.ollama.com/integrations/claude-code) for more options including web search and scheduled tasks.
+
+### Pi Coding Agent
+
+Launch Pi coding agent with Ollama:
+
+```sh
+ollama launch pi
+```
+
+Or launch Pi with a specific model:
+
+```sh
+ollama launch pi --model qwen3.5:cloud
+```
+
+Configure Ollama without launching:
+
+```sh
+ollama launch pi --config
+```
+
+See [Pi integration docs](https://docs.ollama.com/integrations/pi) for more features like extensions and autoresearch.
+
+## Maintenance
+
+Update Homebrew-managed software with:
+
+```sh
 brew bundle --file=Brewfile
+```
 
-# Export currently installed formulae/casks into Brewfile
+Export currently installed formulae/casks:
+
+```sh
 brew bundle dump --force --file=Brewfile
+```
 
-# Uninstall packages not listed in Brewfile
+Uninstall packages not listed in Brewfile:
+
+```sh
 brew bundle cleanup --file=Brewfile --force
 ```
 
-Useful local search command once the bundle is installed:
+Search for TODOs in the repository:
 
 ```sh
 rg "TODO" .
